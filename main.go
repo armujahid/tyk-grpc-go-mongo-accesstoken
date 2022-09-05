@@ -34,7 +34,6 @@ type AccessToken struct {
 	ID      string             `bson:"_id"`
 	Ttl     int64              `bson:"ttl"`
 	Created primitive.DateTime `bson:"created"`
-	UserId  primitive.ObjectID `bson:"userId"`
 }
 
 func init() {
@@ -60,7 +59,7 @@ func init() {
 	fmt.Println("Connected to MongoDB!")
 
 	// Get a handle for your collection
-	collection = client.Database("abdulrauf").Collection("AccessToken")
+	collection = client.Database(os.Getenv("DATABASE")).Collection(os.Getenv("COLLECTION"))
 }
 
 func main() {
