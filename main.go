@@ -97,7 +97,7 @@ func MongoAuth(object *coprocess.Object) (*coprocess.Object, error) {
 	authKey := object.Request.Headers["Authorization"]
 	// try to get session by API key
 	// println(authKey)
-	isValid := validateAccessToken(collection, authKey)
+	isValid, extractorDeadline := validateAccessToken(collection, authKey)
 	// println(isValid)
 
 	if !isValid {
@@ -105,7 +105,6 @@ func MongoAuth(object *coprocess.Object) (*coprocess.Object, error) {
 	}
 
 	// Set the ID extractor deadline, useful for caching valid keys:
-	extractorDeadline := time.Now().Add(time.Minute).Unix()
 	object.Session = &coprocess.SessionState{
 		LastUpdated:         time.Now().String(),
 		Rate:                50,
@@ -114,8 +113,7 @@ func MongoAuth(object *coprocess.Object) (*coprocess.Object, error) {
 		QuotaRenews:         time.Now().Unix(),
 		IdExtractorDeadline: extractorDeadline,
 		Metadata: map[string]string{ // doesn't work if we don't set metadata
-			"jwt":   "jwt",
-			"token": "token",
+			"token": authKey,
 		},
 		ApplyPolicies: policiesToApply,
 	}
@@ -136,16 +134,19 @@ func failAuth(object *coprocess.Object, msg string) (*coprocess.Object, error) {
 }
 
 // check if accesstoken is valid by comparing if ttl + created is greater than current time
-func validateAccessToken(collection *mongo.Collection, token string) bool {
+func validateAccessToken(collection *mongo.Collection, token string) (bool, int64) {
 	var accesstoken AccessToken
 	err := collection.FindOne(context.TODO(), bson.D{{Key: "_id", Value: token}}).Decode(&accesstoken)
 	if err == mongo.ErrNoDocuments {
 		fmt.Printf("No document was found with the _id %s\n", token)
-		return false
+		return false, 0
 	}
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	// fmt.Print(accesstoken.Ttl+time.Unix(accesstoken.Created.Time().Unix(), 0).Unix(), time.Now().Unix())
-	return (accesstoken.Ttl + time.Unix(accesstoken.Created.Time().Unix(), 0).Unix()) > time.Now().Unix()
+	expiry := accesstoken.Ttl + time.Unix(accesstoken.Created.Time().Unix(), 0).Unix() // ttl + created
+	if expiry > time.Now().Unix() {
+		return true, expiry
+	}
+	return false, 0 // already expired
 }
