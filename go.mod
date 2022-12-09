@@ -6,7 +6,7 @@ replace github.com/jensneuse/graphql-go-tools => github.com/TykTechnologies/grap
 
 require (
 	github.com/TykTechnologies/tyk v1.9.2-0.20221129200023-767c8b336fa5
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	go.mongodb.org/mongo-driver v1.11.1
 	google.golang.org/grpc v1.51.0
 )
