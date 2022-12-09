@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	coprocess "github.com/TykTechnologies/tyk-protobuf/bindings/go"
+	coprocess "github.com/TykTechnologies/tyk/coprocess"
 	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
